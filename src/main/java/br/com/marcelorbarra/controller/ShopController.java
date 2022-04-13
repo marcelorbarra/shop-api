@@ -1,6 +1,7 @@
 package br.com.marcelorbarra.controller;
 
 import br.com.marcelorbarra.dto.ShopDTO;
+import br.com.marcelorbarra.events.KafkaClient;
 import br.com.marcelorbarra.model.Shop;
 import br.com.marcelorbarra.model.ShopItem;
 import br.com.marcelorbarra.repository.ShopRepository;
@@ -16,8 +17,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/shop")
 @RequiredArgsConstructor
 public class ShopController {
-
     private final ShopRepository shopRepository;
+    private final KafkaClient kafkaClient;
 
     @GetMapping
     public List<ShopDTO> getShop() {
@@ -37,7 +38,10 @@ public class ShopController {
         for (ShopItem shopItem : shop.getItems()) {
             shopItem.setShop(shop);
         }
-        return ShopDTO.convert(shopRepository.save(shop));
+
+        shopDTO = ShopDTO.convert(shopRepository.save(shop));
+        kafkaClient.sendMessage(shopDTO);
+        return shopDTO;
     }
 
 }
